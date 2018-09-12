@@ -23,8 +23,8 @@ n_train = 60000
 n_test = 10000
 
 # Step 1: Read in data
-mnist_folder = 'data/mnist'
-utils.download_mnist(mnist_folder)
+mnist_folder = '/home/donald/Documents/work/cs20/stanford-tensorflow-tutorials/examples/data/nomnist/notMNIST-to-MNIST/data'#'data/mnist'
+#utils.download_mnist(mnist_folder)
 train, val, test = utils.read_mnist(mnist_folder, flatten=True)
 
 # Step 2: Create datasets and iterator

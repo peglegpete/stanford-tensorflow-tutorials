@@ -19,6 +19,7 @@ DATA_FILE = 'data/birth_life_2010.txt'
 #############################
 ########## TO DO ############
 #############################
+tfe.enable_eager_execution()
 
 # Read the data into a dataset.
 data, n_samples = utils.read_birth_life_data(DATA_FILE)
@@ -28,29 +29,34 @@ dataset = tf.data.Dataset.from_tensor_slices((data[:,0], data[:,1]))
 #############################
 ########## TO DO ############
 #############################
-w = None
-b = None
+w = tfe.Variable(0.0)
+b = tfe.Variable(0.0)
 
 # Define the linear predictor.
 def prediction(x):
   #############################
   ########## TO DO ############
   #############################
-  pass
+  return w*x + b
 
 # Define loss functions of the form: L(y, y_predicted)
 def squared_loss(y, y_predicted):
   #############################
   ########## TO DO ############
   #############################
-  pass
+  return 0.5*(y - y_predicted)**2
 
 def huber_loss(y, y_predicted):
   """Huber loss with `m` set to `1.0`."""
   #############################
   ########## TO DO ############
   #############################
-  pass
+  m = 1.0
+  abs_val = abs(y - y_predicted)
+  if abs_val <= m:
+    return squared_loss(y, y_predicted)
+  else:
+    return m*(abs_val - 0.5*m)
 
 def train(loss_fn):
   """Train a regression model evaluated using `loss_fn`."""
@@ -62,13 +68,13 @@ def train(loss_fn):
   ########## TO DO ############
   #############################
   def loss_for_example(x, y):
-    pass
+    return loss_fn(prediction(x),y)
 
   # Obtain a gradients function using `tfe.implicit_value_and_gradients`.
   #############################
   ########## TO DO ############
   #############################
-  grad_fn = None
+  grad_fn = tfe.implicit_value_and_gradients(loss_for_example)
 
   start = time.time()
   for epoch in range(100):
@@ -78,6 +84,7 @@ def train(loss_fn):
       #############################
       ########## TO DO ############
       #############################
+      loss, gradients = grad_fn(x_i,y_i)
       optimizer.apply_gradients(gradients)
       total_loss += loss
     if epoch % 10 == 0:

@@ -47,17 +47,13 @@ def convert_words_to_index(words, dictionary):
 def generate_sample(index_words, context_window_size):
     """ Form training pairs according to the skip-gram model. """
     for index, center in enumerate(index_words):
-        context = context_window_size
+        context = random.randint(1, context_window_size)
         # get a random target before the center word
-        targets = []
         for target in index_words[max(0, index - context): index]:
-            targets.append(target)
+            yield center, target
         # get a random target after the center wrod
         for target in index_words[index + 1: index + context + 1]:
-            targets.append(target)
-        targets = np.array(targets)
-        #print('utils.py-targets.shape', targets.shape)
-        yield center, targets
+            yield center, target
 
 def most_common_words(visual_fld, num_visualize):
     """ create a list of num_visualize most frequent words to visualize on TensorBoard.
@@ -81,9 +77,8 @@ def batch_gen(download_url, expected_byte, vocab_size, batch_size,
     single_gen = generate_sample(index_words, skip_window)
     
     while True:
-        center_batch = np.zeros([batch_size,1], dtype=np.int32)
-        target_batch = np.zeros([batch_size, skip_window*2],dtype=np.int32)
+        center_batch = np.zeros(batch_size, dtype=np.int32)
+        target_batch = np.zeros([batch_size, 1])
         for index in range(batch_size):
             center_batch[index], target_batch[index] = next(single_gen)
-        #print('utils.py-target_batch.shape', target_batch.shape)
         yield center_batch, target_batch
