@@ -54,7 +54,24 @@ class VGG(object):
         """
         ###############################
         ## TO DO
-        out = None
+        with tf.variable_scope(layer_name, reuse=tf.AUTO_REUSE) as scope:
+        	weights_np, biases_np = self._weights(layer_idx, layer_name)
+        	weights = tf.get_variable(
+        								name = "weights",
+        								intitializer = tf.convert_to_tensor(weights_np)
+        							)
+        	biases = tf.get_variable(
+        								name = "biases",
+        								initializer = tf.convert_to_tensor(biases_np)
+        							)
+        	conv = tf.nn.conv2d(
+								input = prev_layer,
+								filter = weights,
+								strides = [1,1,1,1],
+								padding = 'SAME'
+								)
+        	conv_out = conv + biases
+        	out = tf.nn.relu(conv_out)
         ###############################
         setattr(self, layer_name, out)
 
@@ -70,8 +87,13 @@ class VGG(object):
         Hint for choosing strides and kszie: choose what you feel appropriate
         """
         ###############################
-        ## TO DO
-        out = None
+        with tf.variable_scope(layer_name, reuse = tf.AUTO_REUSE) as scope:
+        	out = tf.nn.avg_pool(
+        						value = prev_layer,
+        						ksize = [1,2,2,1],
+        						strides = [1,2,2,1],
+        						padding = 'VALID',
+        						)
         ###############################
         setattr(self, layer_name, out)
 

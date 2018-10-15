@@ -41,12 +41,13 @@ class StyleTransfer(object):
         self.content_layer = 'conv4_2'
         self.style_layers = ['conv1_1', 'conv2_1', 'conv3_1', 'conv4_1', 'conv5_1']
         # content_w, style_w: corresponding weights for content loss and style loss
-        self.content_w = None
-        self.style_w = None
+        self.content_w = 1 #alpha
+        self.style_w = 50 #beta
         # style_layer_w: weights for different style layers. deep layers have more weights
         self.style_layer_w = [0.5, 1.0, 1.5, 3.0, 4.0] 
-        self.gstep = None # global step
-        self.lr = None
+        self.gstep = tf.Variable(0, dtype=tf.int32, 
+                                trainable=False, name='global_step') # global step
+        self.lr = 0.001
         ###############################
 
     def create_input(self):
@@ -94,7 +95,7 @@ class StyleTransfer(object):
         '''
         ###############################
         ## TO DO
-        self.content_loss = None
+        self.content_loss = (1/tf.reduce_prod(tf.shape(P)))*tf.reduce_sum((F-P)**2)
         ###############################
         
     def _gram_matrix(self, F, N, M):
@@ -102,8 +103,8 @@ class StyleTransfer(object):
             Hint: you'll first have to reshape F
         """
         ###############################
-        ## TO DO
-        return None
+        F_reshaped = tf.reshape(F, [M, N])
+        return F_reshaped @ tf.transpose(F_reshaped)
         ###############################
 
     def _single_style_loss(self, a, g):
@@ -120,7 +121,12 @@ class StyleTransfer(object):
         """
         ###############################
         ## TO DO
-        return None
+        dims = tf.shape(a)
+        N = dims[-1]
+        M = tf.reduce_prod(dims[:-2])
+        A = self._gram_matrix(a, N, M)
+        G = self._gram_matrix(g, N, M)
+        return (1/(4*(N*M)**2))*tf.reduce_sum((G-A)**2)
         ###############################
 
     def _style_loss(self, A):
