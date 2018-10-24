@@ -8,3 +8,8 @@ examples/data
 examples/graphs/*
 examples/checkpoints/*
 examples/visualization/*
+
+assignments/02_style_transfer/my-sol/graphs/
+assignments/02_style_transfer/my-sol/imagenet-vgg-verydeep-19.mat
+
+

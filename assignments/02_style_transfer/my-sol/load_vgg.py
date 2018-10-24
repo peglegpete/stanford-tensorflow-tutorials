@@ -58,11 +58,13 @@ class VGG(object):
         	weights_np, biases_np = self._weights(layer_idx, layer_name)
         	weights = tf.get_variable(
         								name = "weights",
-        								intitializer = tf.convert_to_tensor(weights_np)
+        								initializer = tf.convert_to_tensor(weights_np),
+        								trainable = False
         							)
         	biases = tf.get_variable(
         								name = "biases",
-        								initializer = tf.convert_to_tensor(biases_np)
+        								initializer = tf.convert_to_tensor(biases_np),
+        								trainable = False
         							)
         	conv = tf.nn.conv2d(
 								input = prev_layer,
