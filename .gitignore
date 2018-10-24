@@ -9,6 +9,7 @@ examples/graphs/*
 examples/checkpoints/*
 examples/visualization/*
 
+#ignore the big files
 assignments/02_style_transfer/my-sol/graphs/
 assignments/02_style_transfer/my-sol/imagenet-vgg-verydeep-19.mat
 
