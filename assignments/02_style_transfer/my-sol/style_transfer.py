@@ -232,7 +232,8 @@ class StyleTransfer(object):
                     skip_step = 10
                 elif index >= 20:
                     skip_step = 20
-                
+                    
+                print(index) #TODO: debugg print
                 sess.run(self.opt)
                 if (index + 1) % skip_step == 0:
                     ###############################
