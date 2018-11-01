@@ -235,32 +235,36 @@ class StyleTransfer(object):
                     
                 print(index) #TODO: debugg print
                 sess.run(self.opt)
-                """
-                if True: #TODO: debugging trick, uncomment below
-                #if (index + 1) % skip_step == 0:
+                
+                if (index + 1) % skip_step == 0:
                     ###############################
                     ## TO DO: obtain generated image, loss, and summary
-                    print('A') #TODO: debugg print
-                    gen_image, total_loss, summary = sess.run([self.input_img, self.total_loss, self.summary_op])
+                    #print('A') #TODO: debugg print
+                    #gen_image, total_loss, summary = sess.run([self.input_img, self.total_loss, self.summary_op])
+                    #gen_image = sess.run(self.input_img)
+                    #total_loss = sess.run(self.total_loss)
+                    summary = sess.run(self.summary_op)
+                    
+                    
                     ###############################
-                    print('B') #TODO: debugg print
+                    #print('B') #TODO: debugg print
                     # add back the mean pixels we subtracted before
-                    gen_image = gen_image + self.vgg.mean_pixels 
-                    writer.add_summary(summary, global_step=index)
-                    print('Step {}\n   Sum: {:5.1f}'.format(index + 1, np.sum(gen_image)))
-                    print('   Loss: {:5.1f}'.format(total_loss))
-                    print('   Took: {} seconds'.format(time.time() - start_time))
-                    start_time = time.time()
+                    #gen_image = gen_image + self.vgg.mean_pixels 
+                    #writer.add_summary(summary, global_step=index)
+                    #print('Step {}\n   Sum: {:5.1f}'.format(index + 1, np.sum(gen_image)))
+                    #print('   Loss: {:5.1f}'.format(total_loss))
+                    #print('   Took: {} seconds'.format(time.time() - start_time))
+                    #start_time = time.time()
 
-                    filename = 'outputs/%d.png' % (index)
-                    utils.save_image(filename, gen_image)
+                    #filename = 'outputs/%d.png' % (index)
+                    #utils.save_image(filename, gen_image)
 
                     if (index + 1) % 20 == 0:
                         ###############################
                         ## save the variables into a checkpoint
                         saver.save(sess, 'checkpoints/', index)
                         ###############################
-                 """
+                 
             writer.close()
 
 if __name__ == '__main__':
