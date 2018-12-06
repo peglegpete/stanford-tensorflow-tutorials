@@ -42,12 +42,12 @@ class StyleTransfer(object):
         self.style_layers = ['conv1_1', 'conv2_1', 'conv3_1', 'conv4_1', 'conv5_1']
         # content_w, style_w: corresponding weights for content loss and style loss
         self.content_w = 1 #alpha
-        self.style_w = 50 #beta
+        self.style_w = 1 #beta
         # style_layer_w: weights for different style layers. deep layers have more weights
-        self.style_layer_w = [0.5, 1.0, 1.5, 3.0, 4.0] 
+        self.style_layer_w = [0.5, 1.0, 1.5, 3.0, 4.0] #[4., 3., 1.5, 1., .5]
         self.gstep = tf.Variable(0, dtype=tf.int32, 
                                 trainable=False, name='global_step') # global step
-        self.lr = 0.001
+        self.lr = 0.1
         ###############################
 
     def create_input(self):
@@ -98,7 +98,7 @@ class StyleTransfer(object):
         #print(tf.reduce_sum((F-P)).dtype)
         #print(tf.reduce_prod(tf.shape(P)).dtype)
         factor = tf.cast(1/(4*tf.reduce_prod(tf.shape(P))), tf.float32)
-        self.content_loss = factor*tf.reduce_sum((F-P)**2)
+        self.content_loss = factor*tf.reduce_sum(tf.square(F-P))
         ###############################
         
     def _gram_matrix(self, F, N, M):
@@ -107,7 +107,11 @@ class StyleTransfer(object):
         """
         ###############################
         F_reshaped = tf.reshape(F, [M, N])
-        return F_reshaped @ tf.transpose(F_reshaped)
+        return tf.transpose(F_reshaped) @ F_reshaped
+        
+        #tf.tensordot(F_reshaped, tf.transpose(F_reshaped), axes = 1)
+        
+        #F_reshaped @ tf.transpose(F_reshaped)
         ###############################
 
     def _single_style_loss(self, a, g):
@@ -125,15 +129,21 @@ class StyleTransfer(object):
         ###############################
         ## 
         dims = tf.shape(a)
+        #self.dims = tf.shape(a)
         N = dims[-1]
+        #self.N = tf.cast(dims[-1], tf.float64)
         M = tf.reduce_prod(dims[:-1])
+        #self.M = tf.cast(tf.reduce_prod(dims[:-1]), tf.float64)
         A = self._gram_matrix(a, N, M)
         G = self._gram_matrix(g, N, M)
-        factor = tf.cast((1/(4*(N*M)**2)), tf.float32)
-        return factor*tf.reduce_sum((G-A)**2)
+        N = tf.cast(N, tf.float64)
+        M = tf.cast(M, tf.float64)
+        factor = tf.cast((1./(4.*(N*M)**2)), tf.float32)
+        #self.factor = tf.cast(1./(4.*(self.N*self.M)**2), tf.float32)#tf.cast((1/(4*(N*M)**2)), tf.float32)
+        return factor*tf.reduce_sum(tf.square(G-A))
         ###############################
 
-    def _style_loss(self, A):
+    def _style_loss(self, A, G):
         """ Calculate the total style loss as a weighted sum 
         of style losses at all style layers
         Hint: you'll have to use _single_style_loss()
@@ -141,8 +151,8 @@ class StyleTransfer(object):
         ###############################
         ##
         self.style_loss = 0
-        for a, w in zip(A, self.style_layer_w):
-        	self.style_loss += w*self._single_style_loss(a, a)
+        for a, g, w in zip(A, G, self.style_layer_w):
+        	self.style_loss += w*self._single_style_loss(a, g)
         ###############################
 
     def losses(self):
@@ -158,8 +168,10 @@ class StyleTransfer(object):
             with tf.Session() as sess:
                 sess.run(tf.global_variables_initializer())
                 sess.run(self.input_img.assign(self.style_img))
-                style_layers = sess.run([getattr(self.vgg, layer) for layer in self.style_layers])                              
-            self._style_loss(style_layers)
+                
+                gen_img_styles = [getattr(self.vgg, layer) for layer in self.style_layers]
+                style_layers = sess.run(gen_img_styles)                              
+            self._style_loss(style_layers, gen_img_styles)
 
             ##########################################
             ## TO DO: create total loss. 
@@ -240,24 +252,32 @@ class StyleTransfer(object):
                     ###############################
                     ## TO DO: obtain generated image, loss, and summary
                     #print('A') #TODO: debugg print
-                    #gen_image, total_loss, summary = sess.run([self.input_img, self.total_loss, self.summary_op])
+                    gen_image, total_loss, summary = sess.run([self.input_img, self.total_loss, self.summary_op])
                     #gen_image = sess.run(self.input_img)
+                    style_loss = sess.run(self.style_loss)
+                    content_loss = sess.run(self.content_loss)
                     #total_loss = sess.run(self.total_loss)
-                    summary = sess.run(self.summary_op)
+                    
+                    #N, M, dims, factor = sess.run([self.N, self.M, self.dims, self.factor])
+                    #summary = sess.run(self.summary_op)
+                    
                     
                     
                     ###############################
                     #print('B') #TODO: debugg print
                     # add back the mean pixels we subtracted before
-                    #gen_image = gen_image + self.vgg.mean_pixels 
-                    #writer.add_summary(summary, global_step=index)
-                    #print('Step {}\n   Sum: {:5.1f}'.format(index + 1, np.sum(gen_image)))
-                    #print('   Loss: {:5.1f}'.format(total_loss))
-                    #print('   Took: {} seconds'.format(time.time() - start_time))
-                    #start_time = time.time()
+                    gen_image = gen_image + self.vgg.mean_pixels 
+                    writer.add_summary(summary, global_step=index)
+                    print('Step {}\n   Sum: {:5.1f}'.format(index + 1, np.sum(gen_image)))
+                    #print('N:'+str(N)+' M:'+str(M)+' dims:'+str(dims)+' factor:'+str(factor))
+                    print('   Loss: {:5.1f}'.format(total_loss))
+                    print('   Style loss: {:5.1f}'.format(style_loss))
+                    print('   Content loss: {:5.1f}'.format(content_loss))
+                    print('   Took: {} seconds'.format(time.time() - start_time))
+                    start_time = time.time()
 
-                    #filename = 'outputs/%d.png' % (index)
-                    #utils.save_image(filename, gen_image)
+                    filename = 'outputs/%d.png' % (index)
+                    utils.save_image(filename, gen_image)
 
                     if (index + 1) % 20 == 0:
                         ###############################
@@ -269,7 +289,7 @@ class StyleTransfer(object):
 
 if __name__ == '__main__':
     setup()
-    machine = StyleTransfer('content/deadpool.jpg', 'styles/guernica.jpg', 333, 250)
+    machine = StyleTransfer('content/portrait-content.jpg', 'styles/portrait-style.jpg', 301, 401)
     print('machine init done')
     machine.build()
     print('machine build done')
